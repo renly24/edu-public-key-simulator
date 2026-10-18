@@ -1,0 +1,129 @@
+@import "@fontsource/roboto/300.css";
+@import "@fontsource/roboto/400.css";
+@import "@fontsource/roboto/500.css";
+@import "@fontsource/roboto/700.css";
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+}
+
+/* ---------- 時間の流れ図のアニメーション ---------- */
+
+.seq-anim .draw {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: seq-draw var(--dur) linear var(--delay) forwards;
+}
+
+.seq-anim .pop {
+  opacity: 0;
+  animation: seq-pop 0.25s ease-out var(--delay) forwards;
+}
+
+@keyframes seq-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes seq-pop {
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .seq-anim .draw {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+  .seq-anim .pop {
+    animation: none;
+    opacity: 1;
+  }
+}
+
+/* 送受信の図：データが線に沿って進む */
+.seq-anim .move {
+  animation: flow-move var(--dur) ease-out var(--delay) both;
+}
+
+@keyframes flow-move {
+  from {
+    transform: translate(var(--fx), var(--fy));
+  }
+  to {
+    transform: translate(0px, 0px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .seq-anim .move {
+    animation: none;
+  }
+}
+
+/* ドラッグできる札：さわってほしいことを知らせる */
+.drag-hint {
+  animation: drag-hint 1.4s ease-in-out infinite;
+}
+
+@keyframes drag-hint {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(8px);
+  }
+}
+
+/* まちがえた場所に入れたとき */
+.shake {
+  animation: shake 0.35s;
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-6px);
+  }
+  75% {
+    transform: translateX(6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drag-hint,
+  .shake {
+    animation: none;
+  }
+}
+
+.drag-hint-left {
+  animation: drag-hint-left 1.4s ease-in-out infinite;
+}
+
+@keyframes drag-hint-left {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(-8px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drag-hint-left {
+    animation: none;
+  }
+}
