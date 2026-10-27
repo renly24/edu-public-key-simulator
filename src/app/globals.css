@@ -17,12 +17,12 @@ body {
 .seq-anim .draw {
   stroke-dasharray: 1;
   stroke-dashoffset: 1;
-  animation: seq-draw var(--dur) linear var(--delay) forwards;
+  animation: seq-draw var(--dur, 0.25s) linear var(--delay, 0s) forwards;
 }
 
 .seq-anim .pop {
   opacity: 0;
-  animation: seq-pop 0.25s ease-out var(--delay) forwards;
+  animation: seq-pop 0.25s ease-out var(--delay, 0s) forwards;
 }
 
 @keyframes seq-draw {
@@ -50,7 +50,7 @@ body {
 
 /* 送受信の図：データが線に沿って進む */
 .seq-anim .move {
-  animation: flow-move var(--dur) ease-out var(--delay) both;
+  animation: flow-move var(--dur, 0.25s) ease-out var(--delay, 0s) both;
 }
 
 @keyframes flow-move {
