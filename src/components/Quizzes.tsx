@@ -234,7 +234,7 @@ export function FinalTest({ state, onChange, onSeek }: { state: TestState; onCha
   return (
     <Stack spacing={1.5}>
       {TEST_QUESTIONS.map((q, i) => (
-        <Box key={q.question}>
+        <Box key={q.question} data-question={i}>
           <Typography variant="body2" fontWeight={700} mb={0.5}>
             {i + 1}. {q.question}
           </Typography>
