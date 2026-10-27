@@ -156,15 +156,15 @@ export function KeyPairStage({ onDone }: { onDone?: () => void }) {
           role="button"
           tabIndex={0}
           data-machine
-          onDoubleClick={() => setMade(true)}
+          onClick={() => setMade(true)}
           onKeyDown={(e) => {
-            if (e.key === "Enter") {
+            if (e.key === "Enter" || e.key === " ") {
               e.preventDefault();
               e.stopPropagation();
               setMade(true);
             }
           }}
-          title="ダブルクリックで鍵を作る"
+          title="クリック（タップ）で鍵を作る"
           sx={{
             width: 150,
             p: 1.5,
@@ -182,7 +182,7 @@ export function KeyPairStage({ onDone }: { onDone?: () => void }) {
             鍵を作る機械
           </Typography>
           <Typography variant="caption" color="text.secondary">
-            {made ? "Bさんの鍵ペアができた" : "ダブルクリック！"}
+            {made ? "Bさんの鍵ペアができた" : "タップ！"}
           </Typography>
         </Box>
         <Typography sx={{ fontSize: "1.6rem", color: "#90a4ae" }}>➜</Typography>
