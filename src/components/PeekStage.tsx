@@ -10,11 +10,13 @@ import { svgPoint, useDoneWhen } from "./hooks";
 // ---------- 盗聴者になって、通信路の上を虫めがねでのぞく ----------
 
 const W = 420;
-const H = 170;
-const LINE_Y = 80;
+const H = 240;
+const LINE_Y = 130;
 const X0 = 70;
 const X1 = 350;
 const LENS_R = 38;
+/** タッチ操作のとき、指で隠れないようルーペをここ（上側）に固定で出す */
+const TOUCH_LENS_Y = LENS_R + 6;
 /** 1つのメッセージが通信路を流れきる秒数 */
 const TRAVEL = 6;
 
@@ -28,7 +30,8 @@ export interface PeekItem {
 export default function PeekStage({ items, summary, onDone }: { items: PeekItem[]; summary: string; onDone?: () => void }) {
   const MESSAGES = items;
   const [time, setTime] = useState(0);
-  const [lens, setLens] = useState<{ x: number; y: number } | null>(null);
+  /** 実際に指・カーソルがある位置（のぞいている中身の判定に使う） */
+  const [pointer, setPointer] = useState<{ x: number; y: number; touch: boolean } | null>(null);
   const [seen, setSeen] = useState<number[]>([]);
   const svgRef = useRef<SVGSVGElement>(null);
   useDoneWhen(seen.length === MESSAGES.length, onDone);
@@ -51,14 +54,24 @@ export default function PeekStage({ items, summary, onDone }: { items: PeekItem[
     const phase = (((time / TRAVEL + i / MESSAGES.length) % 1) + 1) % 1;
     return { i, x: X0 + (X1 - X0) * phase };
   });
-  const inLens = (x: number) => lens !== null && Math.abs(lens.x - x) < LENS_R + 20 && Math.abs(lens.y - LINE_Y) < LENS_R + 10;
+  const inLens = (x: number) => pointer !== null && Math.abs(pointer.x - x) < LENS_R + 20 && Math.abs(pointer.y - LINE_Y) < LENS_R + 10;
 
   // 虫めがねに入ったメッセージを、のぞき見たことにする
   const peeking = packets.filter((p) => inLens(p.x)).map((p) => p.i);
   const newly = peeking.filter((i) => !seen.includes(i));
   if (newly.length > 0) setSeen([...seen, ...newly]);
 
-  const onMove = (e: PointerEvent<SVGSVGElement>) => setLens(svgPoint(svgRef.current!, e.clientX, e.clientY));
+  const onMove = (e: PointerEvent<SVGSVGElement>) => {
+    const p = svgPoint(svgRef.current!, e.clientX, e.clientY);
+    setPointer({ ...p, touch: e.pointerType !== "mouse" });
+  };
+  // ルーペを実際に描く位置：タッチ操作では指の上にずらして、中身が指で隠れないようにする
+  const lens = pointer
+    ? pointer.touch
+      ? { x: Math.min(Math.max(pointer.x, LENS_R + 2), W - LENS_R - 2), y: TOUCH_LENS_Y }
+      : { x: pointer.x, y: pointer.y }
+    : null;
+  const lensShift = lens && pointer ? { dx: lens.x - pointer.x, dy: lens.y - pointer.y } : null;
 
   return (
     <Stack spacing={1.5}>
@@ -68,7 +81,7 @@ export default function PeekStage({ items, summary, onDone }: { items: PeekItem[
         viewBox={`0 0 ${W} ${H}`}
         onPointerMove={onMove}
         onPointerDown={onMove}
-        onPointerLeave={() => setLens(null)}
+        onPointerLeave={() => setPointer(null)}
         role="img"
         aria-label="通信路を流れるデータ。カーソルを当てると中身が見える"
         sx={{ width: "100%", maxWidth: 560, mx: "auto", display: "block", bgcolor: "#fff", borderRadius: 2, border: "1px solid #e0e0e0", cursor: "none", touchAction: "none", userSelect: "none" }}
@@ -95,19 +108,21 @@ export default function PeekStage({ items, summary, onDone }: { items: PeekItem[
             </text>
           </g>
         ))}
-        {/* 虫めがねの中：中身が見える */}
-        {lens && (
+        {/* 虫めがねの中：中身が見える（タッチ操作ではずらした分だけ、中身も一緒にずらして見せる） */}
+        {lens && lensShift && (
           <g clipPath="url(#lens)">
-            <rect x={0} y={0} width={W} height={H} fill="#fffde7" />
-            <line x1={X0} y1={LINE_Y} x2={X1} y2={LINE_Y} stroke="#90a4ae" strokeWidth={6} />
-            {packets.map((p) => (
-              <g key={p.i}>
-                <rect x={p.x - 48} y={LINE_Y - 14} width={96} height={28} rx={4} fill="#fff" stroke={items[p.i].color} strokeWidth={2.5} />
-                <text x={p.x} y={LINE_Y + 6} textAnchor="middle" fontSize={14} fontWeight={700} fill={items[p.i].color}>
-                  {text(p.i)}
-                </text>
-              </g>
-            ))}
+            <g transform={`translate(${lensShift.dx} ${lensShift.dy})`}>
+              <rect x={0} y={0} width={W} height={H} fill="#fffde7" />
+              <line x1={X0} y1={LINE_Y} x2={X1} y2={LINE_Y} stroke="#90a4ae" strokeWidth={6} />
+              {packets.map((p) => (
+                <g key={p.i}>
+                  <rect x={p.x - 48} y={LINE_Y - 14} width={96} height={28} rx={4} fill="#fff" stroke={items[p.i].color} strokeWidth={2.5} />
+                  <text x={p.x} y={LINE_Y + 6} textAnchor="middle" fontSize={14} fontWeight={700} fill={items[p.i].color}>
+                    {text(p.i)}
+                  </text>
+                </g>
+              ))}
+            </g>
           </g>
         )}
         {lens && (
