@@ -80,12 +80,22 @@ async function doEveMission(page: Page) {
   if (!box) throw new Error("PeekStage の svg が見つからない");
   const x = box.x + box.width * 0.5;
   const y = box.y + box.height * (130 / 240); // LINE_Y 付近
-  // マウスは hover、タッチは押し続けることで「のぞく」状態を作る
+  // マウスは hover、タッチは押し続けることで「のぞく」状態を作る。
+  // CDP（newCDPSession）は Chromium 専用で WebKit では使えないため、
+  // 素の PointerEvent をディスパッチして、エンジンを問わず動くようにする。
   if (test.info().project.use.hasTouch) {
-    const client = await page.context().newCDPSession(page);
-    await client.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x, y, id: 1 }] });
+    const dispatchTouchPointer = (type: "pointerdown" | "pointerup", px: number, py: number) =>
+      svg.evaluate(
+        (el, [t, ex, ey]) => {
+          el.dispatchEvent(
+            new PointerEvent(t as string, { bubbles: true, cancelable: true, pointerType: "touch", pointerId: 1, isPrimary: true, clientX: ex as number, clientY: ey as number }),
+          );
+        },
+        [type, px, py] as const,
+      );
+    await dispatchTouchPointer("pointerdown", x, y);
     await expect(page.getByText(/のぞき見たもの（2 \/ 2）/)).toBeVisible({ timeout: 10_000 });
-    await client.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+    await dispatchTouchPointer("pointerup", x, y);
   } else {
     await page.mouse.move(x, y);
     await expect(page.getByText(/のぞき見たもの（2 \/ 2）/)).toBeVisible({ timeout: 10_000 });
